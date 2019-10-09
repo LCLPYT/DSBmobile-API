@@ -1,11 +1,7 @@
 package de.sematre.dsbmobile;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.Serializable;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -15,103 +11,91 @@ import com.google.gson.JsonObject;
 public class DSBMobile implements Serializable, Cloneable {
 
 	private static final long serialVersionUID = -5265820858352981519L;
-	private static final String URL_PREFIX = "https://iphone.dsbcontrol.de/iPhoneService.svc/DSB";
 	private static final Gson gson = new Gson();
-	private String key = "";
-
-	public DSBMobile(String key) {
-		this.key = key;
-	}
+	private ArrayList<TimeTable> timeTables = null;
+	private String username, password;
 
 	public DSBMobile(String username, String password) {
-		String json = getStringFromURL(URL_PREFIX + "/authid/" + username + "/" + password);
-		if (json == null) throw new IllegalArgumentException("Wrong username or password");
-
-		JsonArray jArray = gson.fromJson(("[" + json + "]"), JsonArray.class);
-		String key = jArray.get(0).getAsString();
-		if (key.equals("00000000-0000-0000-0000-000000000000")) throw new IllegalArgumentException("Wrong username or password");
-		this.key = key;
+		this.username = username;
+		this.password = password;
+		
+		getTimeTables(true);
 	}
 
 	public ArrayList<TimeTable> getTimeTables() {
+		if(timeTables == null) getTimeTables(true);
+		return timeTables;
+	}
+	
+	public ArrayList<TimeTable> getTimeTables(boolean update) throws IllegalArgumentException{
+		if(!update && timeTables != null) return timeTables;
 		ArrayList<TimeTable> tables = new ArrayList<>();
 
-		String json = getStringFromURL(URL_PREFIX + "/timetables/" + key);
-		for (JsonElement jElement : gson.fromJson(json, JsonArray.class)) {
-			tables.add(new TimeTable(jElement.getAsJsonObject()));
+		String s = WebHandler.fetchData(username, password);
+		if(s == null) throw new IllegalArgumentException("Something went wrong with the requests.");
+		
+		JsonObject obj = gson.fromJson(s, JsonObject.class);
+		int result = obj.get("Resultcode").getAsInt();
+		if(result != 0) throw new IllegalArgumentException("Wrong username or password");
+		
+		JsonArray resultMenuItems = obj.get("ResultMenuItems").getAsJsonArray();
+		JsonObject contents = resultMenuItems.get(0).getAsJsonObject();
+		JsonArray childs = contents.get("Childs").getAsJsonArray();
+		JsonObject first = childs.get(0).getAsJsonObject();
+		JsonObject root = first.get("Root").getAsJsonObject();
+		JsonArray rootChilds = root.get("Childs").getAsJsonArray();
+		
+		for(JsonElement elem : rootChilds) {
+			if(!elem.isJsonObject()) continue;
+			JsonObject day = elem.getAsJsonObject();
+			
+			String date = day.get("Date").getAsString();
+			String id = day.get("Id").getAsString();
+			String groupName = day.get("Title").getAsString();
+			
+			JsonArray dayChilds = day.get("Childs").getAsJsonArray();
+			for(JsonElement dayElem : dayChilds) {
+				if(!dayElem.isJsonObject()) continue;
+				JsonObject dayPage = dayElem.getAsJsonObject();
+				
+				String title = dayPage.get("Title").getAsString();
+				String url = dayPage.get("Detail").getAsString();
+				
+				tables.add(new TimeTable(date, groupName, id, title, url));
+			}
 		}
-
+		
+		timeTables = tables;
 		return tables;
 	}
 
+	@Deprecated
 	public ArrayList<News> getNews() {
-		ArrayList<News> tables = new ArrayList<>();
+		/*ArrayList<News> tables = new ArrayList<>();
 
 		String json = getStringFromURL(URL_PREFIX + "/news/" + key);
 		for (JsonElement jElement : gson.fromJson(json, JsonArray.class)) {
 			tables.add(new News(jElement.getAsJsonObject()));
-		}
+		}*/
 
-		return tables;
-	}
-
-	public String getKey() {
-		return key;
-	}
-
-	public void setKey(String key) {
-		this.key = key;
-	}
-
-	private String getStringFromURL(String url) {
-		try {
-			String text = "";
-			Scanner scanner = new Scanner(new URL(url).openStream());
-			while (scanner.hasNextLine()) {
-				text += scanner.nextLine().trim();
-			}
-
-			scanner.close();
-			return text;
-		} catch (FileNotFoundException e) {
-			return null;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return "";
-		}
+		return new ArrayList<>();
 	}
 
 	public class TimeTable implements Serializable, Cloneable {
 
 		private static final long serialVersionUID = 553852884423090700L;
-		private Boolean isHtml = false;
 		private String date = "";
 		private String groupName = "";
+		private String id = "";
 		private String title = "";
 		private String url = "";
 
-		public TimeTable(Boolean isHtml, String date, String groupName, String title, String url) {
-			this.isHtml = isHtml;
+		public TimeTable(String date, String groupName, String id, String title, String url) {
 			this.date = date;
 			this.groupName = groupName;
+			this.id = id;
 			this.title = title;
 			this.url = url;
-		}
-
-		public TimeTable(JsonObject jsonObject) {
-			this.isHtml = jsonObject.get("ishtml").getAsBoolean();
-			this.date = jsonObject.get("timetabledate").getAsString();
-			this.groupName = jsonObject.get("timetablegroupname").getAsString();
-			this.title = jsonObject.get("timetabletitle").getAsString();
-			this.url = jsonObject.get("timetableurl").getAsString();
-		}
-
-		public Boolean isHtml() {
-			return isHtml;
-		}
-
-		public void setHtml(Boolean isHtml) {
-			this.isHtml = isHtml;
 		}
 
 		public String getDate() {
@@ -121,15 +105,23 @@ public class DSBMobile implements Serializable, Cloneable {
 		public void setDate(String date) {
 			this.date = date;
 		}
-
+		
 		public String getGroupName() {
 			return groupName;
 		}
-
+		
 		public void setGroupName(String groupName) {
 			this.groupName = groupName;
 		}
 
+		public String getId() {
+			return id;
+		}
+		
+		public void setId(String id) {
+			this.id = id;
+		}
+		
 		public String getTitle() {
 			return title;
 		}
@@ -155,12 +147,12 @@ public class DSBMobile implements Serializable, Cloneable {
 			if (date == null) {
 				if (other.date != null) return false;
 			} else if (!date.equals(other.date)) return false;
+			if (id == null) {
+				if (other.id != null) return false;
+			} else if (!id.equals(other.id)) return false;
 			if (groupName == null) {
 				if (other.groupName != null) return false;
 			} else if (!groupName.equals(other.groupName)) return false;
-			if (isHtml == null) {
-				if (other.isHtml != null) return false;
-			} else if (!isHtml.equals(other.isHtml)) return false;
 			if (title == null) {
 				if (other.title != null) return false;
 			} else if (!title.equals(other.title)) return false;
@@ -172,10 +164,14 @@ public class DSBMobile implements Serializable, Cloneable {
 
 		@Override
 		public String toString() {
-			return "{\"isHtml\":\"" + isHtml + "\", \"date\":\"" + date + "\", \"groupName\":\"" + groupName + "\", \"title\":\"" + title + "\", \"url\":\"" + url + "\"}";
+			return "{\"date\":\"" + date + "\", \"groupName\":\"" + groupName + "\", \"id\":\"" + id + "\", \"title\":\"" + title + "\", \"url\":\"" + url + "\"}";
 		}
 	}
 
+	/*
+	 * Not yet implemented with the new API
+	 */
+	@Deprecated
 	public class News implements Serializable, Cloneable {
 
 		private static final long serialVersionUID = 2336407351548626614L;
