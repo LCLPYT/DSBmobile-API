@@ -1,7 +1,5 @@
 # DSBmobile-API
-[![Release Version][release-image]][release-url]
-[![Maven Version][maven-image]][maven-url]
-[![Build Status][travis-image]][travis-url]
+[![](https://jitpack.io/v/LCLPYT/DSBmobile-API.svg)](https://jitpack.io/#LCLPYT/DSBmobile-API)
 [![License][license-image]][license-url]
 > Unofficial DSBmobile API for Java.
 
