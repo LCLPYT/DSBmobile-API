@@ -17,14 +17,11 @@ try {
 
 	ArrayList<TimeTable> timeTables = dsbMobile.getTimeTables();
 	for (TimeTable timeTable : timeTables) {
-
-		Boolean isHtml = timeTable.isHtml();
-
 		String date = timeTable.getDate();
 		String groupName = timeTable.getGroupName();
+		String id = timeTable.getId();
 		String title = timeTable.getTitle();
 		String url = timeTable.getUrl();
-
 	}
 } catch (IllegalArgumentException e) {
 	// Wrong username or password!
@@ -33,26 +30,7 @@ try {
 Note: The try-catch block is not necessary.
 
 ### News
-```java
-try {
-	DSBMobile dsbMobile = new DSBMobile("username", "password");
-
-	ArrayList<News> newsList = dsbMobile.getNews();
-	for (News news : newsList) {
-
-		String id = news.getId();
-		String headLine = news.getHeadLine();
-		String date = news.getDate();
-		String imageUrl = news.getImageUrl();
-		String shortMessage = news.getShortMessage();
-		String wholeMessage = news.getWholeMessage();
-
-	}
-} catch (IllegalArgumentException e) {
-	// Wrong username or password!
-}
-```
-Note: The try-catch block is not necessary.
+Note: News are not yet implemented in the new api.
 
 ## Implementation
 Gradle:
@@ -72,6 +50,8 @@ Maven:
 ```
 
 ## Release History
+* 1.3
+    * New API implemented
 * 1.2
     * Maven implementation
 * 1.1
@@ -82,8 +62,12 @@ Maven:
 
 ## Dependencies
 - [Google Gson](https://github.com/google/gson) ([Apache 2 license](https://github.com/google/gson/blob/master/LICENSE))
+- [Commons IO](https://commons.apache.org/proper/commons-io/) ([Apache 2 license](https://github.com/google/gson/blob/master/LICENSE))
+- [JSoup](https://jsoup.org/) ([MIT license](https://jsoup.org/license))
 
 ## Info
+Fork by LCLPYT 2019
+
 © Sematre 2018
 
 Distributed under the **MIT License**. See ``LICENSE`` for more information.
