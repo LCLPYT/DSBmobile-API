@@ -34,19 +34,42 @@ Note: News are not yet implemented in the new api.
 
 ## Implementation
 Gradle:
+
+**Step 1.** Add the JitPack repository to your build file
+Add it in your root build.gradle at the end of repositories:
 ```gradle
-dependencies {
-	implementation 'de.sematre.dsbmobile:DSBmobile-API:1.2'
-}
+	allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+```
+**Step 2.** Add the dependency
+```gradle
+	dependencies {
+		implementation 'com.github.LCLPYT:DSBmobile-API:1.3f'
+	}
 ```
 
 Maven:
+
+**Step 1.** Add the JitPack repository to your build file
 ```xml
-<dependency>
-	<groupId>de.sematre.dsbmobile</groupId>
-	<artifactId>DSBmobile-API</artifactId>
-	<version>1.2</version>
-</dependency>
+	<repositories>
+		<repository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+		</repository>
+	</repositories>
+```
+
+```xml
+	<dependency>
+	    <groupId>com.github.LCLPYT</groupId>
+	    <artifactId>DSBmobile-API</artifactId>
+	    <version>1.3f</version>
+	</dependency>
 ```
 
 ## Release History
