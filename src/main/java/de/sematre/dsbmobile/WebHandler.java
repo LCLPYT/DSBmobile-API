@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -36,13 +38,15 @@ public class WebHandler {
 	public static String fetchData(String user, String password) {
 		CookieManager manager = new CookieManager();
 		CookieHandler.setDefault(manager);
-		
+
 		try {
 			Map<String, String> formData = getFormData();
-			
+
 			login(formData, user, password);
 			
-			return getResult();
+			Map<String, String> config = loadConfig();
+			
+			return getResult(config);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
@@ -54,7 +58,7 @@ public class WebHandler {
 		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
 		conn.setRequestMethod("GET");
 		conn.addRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
-		
+
 		try (InputStream is = conn.getInputStream()) {
 			String s = IOUtils.toString(is, "UTF-8");
 			conn.disconnect();
@@ -77,36 +81,72 @@ public class WebHandler {
 			return params;
 		}
 	}
-	
+
 	private static void login(Map<String, String> formData, String user, String password) throws IOException {
 		List<NameValue> params = getParams(formData, "__LASTFOCUS", "__VIEWSTATE", "__VIEWSTATEGENERATOR", "__EVENTTARGET", "__EVENTARGUMENT", "__EVENTVALIDATION");
 		params.add(new NameValue("txtUser", user));
 		params.add(new NameValue("txtPass", password));
 		params.add(new NameValue("ctl03", "Anmelden"));
-		
+
 		String urlEncoded = getUrlEncodedFormData(params);
-		
+
 		URL url = new URL("https://www.dsbmobile.de/Login.aspx?ReturnUrl=%2f");
 		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
 		conn.setRequestMethod("POST");
 		conn.setDoOutput(true);
-		
+
 		try (DataOutputStream out = new DataOutputStream(conn.getOutputStream())) {
 			out.writeBytes(urlEncoded);
 			out.flush();
 		}
-		
+
 		conn.getResponseCode();
-		
+
 		conn.disconnect();
 	}
 	
-	private static String getResult() throws IOException {
-		URL url = new URL("https://www.dsbmobile.de/JsonHandlerWeb.ashx/GetData");
+	private static Map<String, String> loadConfig() throws IOException {
+		URL url = new URL("https://www.dsbmobile.de/scripts/configuration.js");
+		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+		conn.setRequestMethod("GET");
+
+		String response;
+		try (InputStream is = conn.getInputStream()) {
+			response = IOUtils.toString(is, "UTF-8");
+			conn.disconnect();
+		}
+		
+		Map<String, String> config = new HashMap<>(); 
+		
+		Pattern p = Pattern.compile("METHOD\\:\\w*\\'(.*)\\'");
+		Matcher m = p.matcher(response);
+		
+		String method = null;
+		while(m.find()) {
+			if(method != null) throw new IllegalStateException("There are more than two matches for " + p.toString() + " in the config.");
+			try {
+				method = m.group(1);
+			} catch (IndexOutOfBoundsException e) {
+				IllegalStateException ex = new IllegalStateException("The config is malformed or this program uses outdated regex patterns.");
+				ex.addSuppressed(e);
+				throw ex;
+			}
+		}
+		if(method == null) throw new IllegalStateException("There is no match for " + p.toString() + " in the config.");
+		else config.put("method", method);
+		
+		return config;
+	}
+
+	private static String getResult(Map<String, String> config) throws IOException {
+		String method = config.get("method");
+		if(method == null) throw new IllegalStateException("The loaded config does not contain a value for key 'method'.");
+		
+		URL url = new URL("https://www.dsbmobile.de/" + method);
 		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
 		conn.setRequestMethod("POST");
 		conn.setDoOutput(true);
-		
+
 		completePost(conn);
 		
 		String postData = getPostData();
@@ -115,14 +155,14 @@ public class WebHandler {
 			out.writeBytes(postData);
 			out.flush();
 		}
-		
+
 		try (InputStream is = conn.getInputStream()) {
 			String s = IOUtils.toString(is, "UTF-8");
 			conn.disconnect();
 
 			JsonObject obj = new Gson().fromJson(s, JsonObject.class);
 			String data = obj.get("d").getAsString();
-			
+
 			return BinaryZLibConversion.decrypt(data);
 		}
 	}
@@ -137,30 +177,30 @@ public class WebHandler {
 		String s = obj.toString();
 		return s;
 	}
-	
+
 	private static String getData() throws IOException { //TODO use config values! could break in the future
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
 		format.setTimeZone(TimeZone.getTimeZone("UTC"));
-		
-        JsonObject obj = new JsonObject();
-        obj.addProperty("UserId", "");
-        obj.addProperty("UserPw", "");
-        obj.add("Abos", new JsonArray());
-        obj.addProperty("AppVersion", "2.3");
-        obj.addProperty("Language", "de");
-        obj.addProperty("OsVersion", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36 OPR/63.0.3368.107");
-        obj.addProperty("AppId", "");
-        obj.addProperty("Device", "WebApp");
-        obj.addProperty("PushId", "");
-        obj.addProperty("BundleId", "de.heinekingmedia.inhouse.dsbmobile.web");
-        obj.addProperty("Date", format.format(new Date()));
-        obj.addProperty("LastUpdate", format.format(new Date()));
-        
-        String json = obj.toString();
-        
+
+		JsonObject obj = new JsonObject();
+		obj.addProperty("UserId", "");
+		obj.addProperty("UserPw", "");
+		obj.add("Abos", new JsonArray());
+		obj.addProperty("AppVersion", "2.3");
+		obj.addProperty("Language", "de");
+		obj.addProperty("OsVersion", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36 OPR/63.0.3368.107");
+		obj.addProperty("AppId", "");
+		obj.addProperty("Device", "WebApp");
+		obj.addProperty("PushId", "");
+		obj.addProperty("BundleId", "de.heinekingmedia.inhouse.dsbmobile.web");
+		obj.addProperty("Date", format.format(new Date()));
+		obj.addProperty("LastUpdate", format.format(new Date()));
+
+		String json = obj.toString();
+
 		return BinaryZLibConversion.encrypt(json);
 	}
-	
+
 	private static void completePost(HttpsURLConnection conn) throws IOException {
 		conn.setRequestProperty("Host", "www.dsbmobile.de");
 		conn.setRequestProperty("Connection", "keep-alive");
@@ -176,19 +216,19 @@ public class WebHandler {
 		conn.setRequestProperty("Accept-Encoding", "gzip, deflate, br");
 		conn.setRequestProperty("Accept-Language", "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7");
 	}
-	
+
 	private static String getUrlEncodedFormData(List<NameValue> params) throws UnsupportedEncodingException {
 		StringBuilder builder = new StringBuilder();
-		
+
 		for(NameValue pair : params) {
 			String s = getUrlEncoded(pair.getName()) + "=" + getUrlEncoded(pair.getValue());
 			if(builder.length() <= 0) builder.append(s);
 			else builder.append("&" + s);
 		}
-		
+
 		return builder.toString();
 	}
-	
+
 	private static String getUrlEncoded(String s) throws UnsupportedEncodingException {
 		return URLEncoder.encode(s, "UTF-8");
 	}
@@ -212,24 +252,24 @@ public class WebHandler {
 
 		return params;
 	}
-	
+
 	private static class NameValue {
-		
+
 		private String name, value;
-		
+
 		public NameValue(String name, String value) {
 			this.name = name;
 			this.value = value;
 		}
-		
+
 		public String getName() {
 			return name;
 		}
-		
+
 		public String getValue() {
 			return value;
 		}
-		
+
 	}
 
 }
