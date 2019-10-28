@@ -5,7 +5,7 @@
 
 	<groupId>work.lclpnet.dsbmobile</groupId>
 	<artifactId>DSBmobile-API</artifactId>
-	<version>1.4f</version>
+	<version>1.4.1f</version>
 
 	<name>DSBmobile-API</name>
 	<description>Unofficial DSBmobile API for Java (Fork).</description>
