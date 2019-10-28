@@ -33,10 +33,6 @@ import de.sematre.dsbmobile.util.BinaryZLibConversion;
 
 public class WebHandler {
 
-	public static String fetchData(String user, String password) {
-		return fetchData(user, password, null);
-	}
-	
 	public static String fetchData(String user, String password, String methodUrl) {
 		CookieManager manager = new CookieManager();
 		CookieHandler.setDefault(manager);

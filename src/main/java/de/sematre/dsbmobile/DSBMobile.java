@@ -15,10 +15,6 @@ public class DSBMobile implements Serializable, Cloneable {
 	private ArrayList<TimeTable> timeTables = null;
 	private String username, password, customMethodUrl;
 
-	public DSBMobile(String username, String password) {
-		this(username, password, null);
-	}
-	
 	public DSBMobile(String username, String password, String customMethodUrl) {
 		this.username = username;
 		this.password = password;
@@ -43,7 +39,9 @@ public class DSBMobile implements Serializable, Cloneable {
 	public ArrayList<TimeTable> getTimeTables(boolean update) throws IllegalArgumentException{
 		if(!update && timeTables != null) return timeTables;
 
-		String s = customMethodUrl == null ? WebHandler.fetchData(username, password) : WebHandler.fetchData(username, password, customMethodUrl);
+		if(customMethodUrl == null) throw new IllegalArgumentException("The methodUrl might not be null!");
+		
+		String s = WebHandler.fetchData(username, password, customMethodUrl);
 		if(s == null) throw new IllegalArgumentException("Something went wrong with the requests.");
 		
 		ArrayList<TimeTable> tables = getTimeTables(s);
