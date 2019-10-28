@@ -29,12 +29,19 @@ public class DSBMobile implements Serializable, Cloneable {
 	
 	public ArrayList<TimeTable> getTimeTables(boolean update) throws IllegalArgumentException{
 		if(!update && timeTables != null) return timeTables;
-		ArrayList<TimeTable> tables = new ArrayList<>();
 
 		String s = WebHandler.fetchData(username, password);
 		if(s == null) throw new IllegalArgumentException("Something went wrong with the requests.");
 		
-		JsonObject obj = gson.fromJson(s, JsonObject.class);
+		ArrayList<TimeTable> tables = getTimeTables(s);
+		this.timeTables = tables;
+		return tables;
+	}
+
+	public static ArrayList<TimeTable> getTimeTables(String json) {
+		ArrayList<TimeTable> tables = new ArrayList<>();
+
+		JsonObject obj = gson.fromJson(json, JsonObject.class);
 		int result = obj.get("Resultcode").getAsInt();
 		if(result != 0) throw new IllegalArgumentException("Wrong username or password");
 		
@@ -65,7 +72,6 @@ public class DSBMobile implements Serializable, Cloneable {
 			}
 		}
 		
-		timeTables = tables;
 		return tables;
 	}
 
@@ -81,7 +87,7 @@ public class DSBMobile implements Serializable, Cloneable {
 		return new ArrayList<>();
 	}
 
-	public class TimeTable implements Serializable, Cloneable {
+	public static class TimeTable implements Serializable, Cloneable {
 
 		private static final long serialVersionUID = 553852884423090700L;
 		private String date = "";
