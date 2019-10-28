@@ -66,7 +66,7 @@ Maven:
 	<dependency>
 	    <groupId>com.github.LCLPYT</groupId>
 	    <artifactId>DSBmobile-API</artifactId>
-	    <version>1.4f</version>
+	    <version>1.4.2f</version>
 	</dependency>
 ```
 
