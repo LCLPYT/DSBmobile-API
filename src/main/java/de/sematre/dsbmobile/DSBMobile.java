@@ -13,13 +13,26 @@ public class DSBMobile implements Serializable, Cloneable {
 	private static final long serialVersionUID = -5265820858352981519L;
 	private static final Gson gson = new Gson();
 	private ArrayList<TimeTable> timeTables = null;
-	private String username, password;
+	private String username, password, customMethodUrl;
 
 	public DSBMobile(String username, String password) {
+		this(username, password, null);
+	}
+	
+	public DSBMobile(String username, String password, String customMethodUrl) {
 		this.username = username;
 		this.password = password;
+		this.customMethodUrl = customMethodUrl;
 		
 		getTimeTables(true);
+	}
+	
+	public String getCustomMethodUrl() {
+		return customMethodUrl;
+	}
+	
+	public void setCustomMethodUrl(String customMethodUrl) {
+		this.customMethodUrl = customMethodUrl;
 	}
 
 	public ArrayList<TimeTable> getTimeTables() {
@@ -30,7 +43,7 @@ public class DSBMobile implements Serializable, Cloneable {
 	public ArrayList<TimeTable> getTimeTables(boolean update) throws IllegalArgumentException{
 		if(!update && timeTables != null) return timeTables;
 
-		String s = WebHandler.fetchData(username, password);
+		String s = customMethodUrl == null ? WebHandler.fetchData(username, password) : WebHandler.fetchData(username, password, customMethodUrl);
 		if(s == null) throw new IllegalArgumentException("Something went wrong with the requests.");
 		
 		ArrayList<TimeTable> tables = getTimeTables(s);

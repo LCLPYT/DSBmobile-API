@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -36,6 +34,10 @@ import de.sematre.dsbmobile.util.BinaryZLibConversion;
 public class WebHandler {
 
 	public static String fetchData(String user, String password) {
+		return fetchData(user, password, null);
+	}
+	
+	public static String fetchData(String user, String password, String methodUrl) {
 		CookieManager manager = new CookieManager();
 		CookieHandler.setDefault(manager);
 
@@ -44,15 +46,15 @@ public class WebHandler {
 
 			login(formData, user, password);
 			
-			Map<String, String> config = loadConfig();
+			//Map<String, String> config = loadConfig();
 			
-			return getResult(config);
+			return getResult(methodUrl);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
-
+	
 	private static Map<String, String> getFormData() throws IOException {
 		URL url = new URL("https://www.dsbmobile.de/");
 		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
@@ -105,7 +107,7 @@ public class WebHandler {
 		conn.disconnect();
 	}
 	
-	private static Map<String, String> loadConfig() throws IOException {
+	/*private static Map<String, String> loadConfig() throws IOException {
 		URL url = new URL("https://www.dsbmobile.de/scripts/configuration.js");
 		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
 		conn.setRequestMethod("GET");
@@ -136,13 +138,14 @@ public class WebHandler {
 		else config.put("method", method);
 		
 		return config;
-	}
+	}*/
 
-	private static String getResult(Map<String, String> config) throws IOException {
-		String method = config.get("method");
+	private static String getResult(String methodUrl) throws IOException {
+		/*String method = config.get("method");
 		if(method == null) throw new IllegalStateException("The loaded config does not contain a value for key 'method'.");
 		
-		URL url = new URL("https://www.dsbmobile.de/" + method);
+		URL url = new URL("https://www.dsbmobile.de/" + method);*/
+		URL url = new URL(methodUrl);
 		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
 		conn.setRequestMethod("POST");
 		conn.setDoOutput(true);
