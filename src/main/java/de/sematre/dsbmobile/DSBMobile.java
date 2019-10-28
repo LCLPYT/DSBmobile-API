@@ -97,6 +97,24 @@ public class DSBMobile implements Serializable, Cloneable {
 
 		return new ArrayList<>();
 	}
+	
+	/**
+	 * Checks if the given credentials are valid.
+	 * 
+	 * @param user The username.
+	 * @param password The password.
+	 * @return True, if the credentials are valid.
+	 */
+	public static boolean login(String user, String password) {
+		try {
+			WebHandler.fetchData(user, password, null);
+			return true;
+		} catch (IllegalArgumentException e) {
+			return e.getMessage().equals("Wrong username or password");
+		} catch (Exception e) {
+			return true;
+		}
+	}
 
 	public static class TimeTable implements Serializable, Cloneable {
 

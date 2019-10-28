@@ -99,6 +99,14 @@ public class WebHandler {
 		}
 
 		conn.getResponseCode();
+		
+		try (InputStream in = conn.getInputStream()) {
+			String s = IOUtils.toString(in, "UTF-8");
+			conn.disconnect();
+
+			Document d = Jsoup.parse(s);
+			if(d.title().equals("DSBmobile - Login")) throw new IllegalArgumentException("Wrong username or password");
+		}
 
 		conn.disconnect();
 	}
