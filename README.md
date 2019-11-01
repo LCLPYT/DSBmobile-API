@@ -71,8 +71,11 @@ Maven:
 ```
 
 ## Release History
-* 1.4
-    * API now working again. (Web interface update)
+* 1.5f
+    * Now using the app interface.
+    * Huge performance update.
+* 1.4f
+    * removed due to malfunction
 * 1.3
     * removed due to malfunction
 * 1.2
@@ -85,7 +88,7 @@ Maven:
 
 ## Dependencies
 - [Google Gson](https://github.com/google/gson) ([Apache 2 license](https://github.com/google/gson/blob/master/LICENSE))
-- [Commons IO](https://commons.apache.org/proper/commons-io/) ([Apache 2 license](https://github.com/google/gson/blob/master/LICENSE))
+- [Google Gson](https://github.com/hsiafan/requests) ([BSD 2-Clause](https://github.com/hsiafan/requests/blob/master/LICENSE))
 - [JSoup](https://jsoup.org/) ([MIT license](https://jsoup.org/license))
 
 ## Info
