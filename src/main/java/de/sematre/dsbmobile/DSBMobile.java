@@ -13,24 +13,19 @@ public class DSBMobile implements Serializable, Cloneable {
 	private static final long serialVersionUID = -5265820858352981519L;
 	private static final Gson gson = new Gson();
 	private ArrayList<TimeTable> timeTables = null;
-	private String username, password, customMethodUrl;
+	private String username, password;
 
-	public DSBMobile(String username, String password, String customMethodUrl) {
+	public DSBMobile(String username, String password) {
+		this(username, password, true);
+	}
+	
+	public DSBMobile(String username, String password, boolean fetch) {
 		this.username = username;
 		this.password = password;
-		this.customMethodUrl = customMethodUrl;
 		
-		getTimeTables(true);
+		if(fetch) getTimeTables(true);
 	}
 	
-	public String getCustomMethodUrl() {
-		return customMethodUrl;
-	}
-	
-	public void setCustomMethodUrl(String customMethodUrl) {
-		this.customMethodUrl = customMethodUrl;
-	}
-
 	public ArrayList<TimeTable> getTimeTables() {
 		if(timeTables == null) getTimeTables(true);
 		return timeTables;
@@ -39,9 +34,7 @@ public class DSBMobile implements Serializable, Cloneable {
 	public ArrayList<TimeTable> getTimeTables(boolean update) throws IllegalArgumentException{
 		if(!update && timeTables != null) return timeTables;
 
-		if(customMethodUrl == null) throw new IllegalArgumentException("The methodUrl might not be null!");
-		
-		String s = WebHandler.fetchData(username, password, customMethodUrl);
+		String s = WebHandler.fetchData(username, password);
 		if(s == null) throw new IllegalArgumentException("Something went wrong with the requests.");
 		
 		ArrayList<TimeTable> tables = getTimeTables(s);
@@ -107,12 +100,11 @@ public class DSBMobile implements Serializable, Cloneable {
 	 */
 	public static boolean login(String user, String password) {
 		try {
-			WebHandler.fetchData(user, password, null);
+			new DSBMobile(user, password).getTimeTables();
 			return true;
-		} catch (IllegalArgumentException e) {
-			return e.getMessage().equals("Wrong username or password");
 		} catch (Exception e) {
-			return true;
+			if(!(e instanceof IllegalArgumentException && e.getMessage().equals("Wrong username or password"))) e.printStackTrace();
+			return false;
 		}
 	}
 
