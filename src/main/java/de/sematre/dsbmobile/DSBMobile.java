@@ -8,21 +8,40 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import de.sematre.dsbmobile.web.Fetcher;
+import de.sematre.dsbmobile.web.WebHandler;
+
 public class DSBMobile implements Serializable, Cloneable {
 
 	private static final long serialVersionUID = -5265820858352981519L;
 	private static final Gson gson = new Gson();
 	private ArrayList<TimeTable> timeTables = null;
 	private String username, password;
+	private Fetcher<String> fetcher;
 
 	public DSBMobile(String username, String password) {
 		this(username, password, true);
 	}
-	
+
 	public DSBMobile(String username, String password, boolean fetch) {
+		// this(username, password, fetch, WebHandler::fetchData); not supported by JAVA < 8
+		
+		this(username, password, fetch, new Fetcher<String>() {
+			
+			@Override
+			public String fetch(String user, String password) {
+				return WebHandler.fetchData(user, password);
+			}
+		});
+	}
+	
+	public DSBMobile(String username, String password, boolean fetch, Fetcher<String> fetcher) {
 		this.username = username;
 		this.password = password;
+		this.fetcher = fetcher;
 		
+		if(fetcher == null) throw new IllegalArgumentException("The fetcher musn't be null!");
+
 		if(fetch) getTimeTables(true);
 	}
 	
@@ -30,13 +49,13 @@ public class DSBMobile implements Serializable, Cloneable {
 		if(timeTables == null) getTimeTables(true);
 		return timeTables;
 	}
-	
+
 	public ArrayList<TimeTable> getTimeTables(boolean update) throws IllegalArgumentException{
 		if(!update && timeTables != null) return timeTables;
 
-		String s = WebHandler.fetchData(username, password);
+		String s = this.fetcher.fetch(username, password);
 		if(s == null) throw new IllegalArgumentException("Something went wrong with the requests.");
-		
+
 		ArrayList<TimeTable> tables = getTimeTables(s);
 		this.timeTables = tables;
 		return tables;
@@ -48,34 +67,34 @@ public class DSBMobile implements Serializable, Cloneable {
 		JsonObject obj = gson.fromJson(json, JsonObject.class);
 		int result = obj.get("Resultcode").getAsInt();
 		if(result != 0) throw new IllegalArgumentException("Wrong username or password");
-		
+
 		JsonArray resultMenuItems = obj.get("ResultMenuItems").getAsJsonArray();
 		JsonObject contents = resultMenuItems.get(0).getAsJsonObject();
 		JsonArray childs = contents.get("Childs").getAsJsonArray();
 		JsonObject first = childs.get(0).getAsJsonObject();
 		JsonObject root = first.get("Root").getAsJsonObject();
 		JsonArray rootChilds = root.get("Childs").getAsJsonArray();
-		
+
 		for(JsonElement elem : rootChilds) {
 			if(!elem.isJsonObject()) continue;
 			JsonObject day = elem.getAsJsonObject();
-			
+
 			String date = day.get("Date").getAsString();
 			String id = day.get("Id").getAsString();
 			String groupName = day.get("Title").getAsString();
-			
+
 			JsonArray dayChilds = day.get("Childs").getAsJsonArray();
 			for(JsonElement dayElem : dayChilds) {
 				if(!dayElem.isJsonObject()) continue;
 				JsonObject dayPage = dayElem.getAsJsonObject();
-				
+
 				String title = dayPage.get("Title").getAsString();
 				String url = dayPage.get("Detail").getAsString();
-				
+
 				tables.add(new TimeTable(date, groupName, id, title, url));
 			}
 		}
-		
+
 		return tables;
 	}
 
@@ -90,7 +109,7 @@ public class DSBMobile implements Serializable, Cloneable {
 
 		return new ArrayList<>();
 	}
-	
+
 	/**
 	 * Checks if the given credentials are valid.
 	 * 
@@ -132,11 +151,11 @@ public class DSBMobile implements Serializable, Cloneable {
 		public void setDate(String date) {
 			this.date = date;
 		}
-		
+
 		public String getGroupName() {
 			return groupName;
 		}
-		
+
 		public void setGroupName(String groupName) {
 			this.groupName = groupName;
 		}
@@ -144,11 +163,11 @@ public class DSBMobile implements Serializable, Cloneable {
 		public String getId() {
 			return id;
 		}
-		
+
 		public void setId(String id) {
 			this.id = id;
 		}
-		
+
 		public String getTitle() {
 			return title;
 		}

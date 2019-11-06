@@ -8,35 +8,43 @@ import java.util.zip.GZIPOutputStream;
 
 public class GZIP {
 
-	public static String inflate(byte[] byteArray) throws IOException {
-		ByteArrayInputStream in = new ByteArrayInputStream(byteArray);
-		GZIPInputStream gin = new GZIPInputStream(in);
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-		int bytes_read;
-		byte[] buffer = new byte[1024];
-		
-		while ((bytes_read = gin.read(buffer)) > 0) {
-			out.write(buffer, 0, bytes_read);
+	public static byte[] gzip(byte[] byteArray) {
+		try {
+			final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(byteArray.length);
+			final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream);
+			gzipOutputStream.write(byteArray);
+			gzipOutputStream.close();
+			byteArray = byteArrayOutputStream.toByteArray();
+			byteArrayOutputStream.close();
+			return byteArray;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
 		}
-
-		byte[] inflated = out.toByteArray();
-
-		gin.close();
-		out.close();
-
-		return new String(inflated);
 	}
-	
-	public static byte[] deflate(String s) throws IOException {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		GZIPOutputStream gout = new GZIPOutputStream(out);
-		
-		gout.write(s.getBytes());
-		
-		gout.close();
 
-		return out.toByteArray();
+	public static byte[] gunzip(final byte[] array) {
+		try {
+			final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(array);
+			final GZIPInputStream gzipInputStream = new GZIPInputStream(byteArrayInputStream, 32);
+			final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+			final byte[] array2 = new byte[32];
+			while (true) {
+				final int read = gzipInputStream.read(array2);
+				if (read == -1) {
+					break;
+				}
+				byteArrayOutputStream.write(array2, 0, read);
+			}
+			gzipInputStream.close();
+			byteArrayInputStream.close();
+			final byte[] byteArray = byteArrayOutputStream.toByteArray();
+			byteArrayOutputStream.close();
+			return byteArray;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
-	
+
 }
