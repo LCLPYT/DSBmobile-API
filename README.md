@@ -46,7 +46,7 @@ allprojects {
 **Step 2.** Add the dependency
 ```gradle
 dependencies {
-	implementation 'com.github.LCLPYT:DSBmobile-API:1.4f'
+	implementation 'com.github.LCLPYT:DSBmobile-API:1.6f'
 }
 ```
 
@@ -66,7 +66,7 @@ Maven:
 	<dependency>
 	    <groupId>com.github.LCLPYT</groupId>
 	    <artifactId>DSBmobile-API</artifactId>
-	    <version>1.4.2f</version>
+	    <version>1.6f</version>
 	</dependency>
 ```
 
